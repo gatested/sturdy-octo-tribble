@@ -2,7 +2,7 @@
 
 import { APIURl } from '@/services/APIPath';
 import ProductDedicatedPage from './ProductClient';
-export async function generateMetadata({ params }: { params: { id: string } }) {
+export async function generateMetadata({ params }: any) {
   try {
     const res = await fetch(`${APIURl}/products/product/${params.id}`, {
       // No-cache por si los metadatos cambian frecuentemente
@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
   }
 }
 
-export default function Page({ params }: { params: { id: string } }) {
+export default function Page({ params }: any) {
   // No se pasa productInicial: lo carga el cliente
   return <ProductDedicatedPage id={params.id} />;
 }

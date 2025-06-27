@@ -9,7 +9,7 @@ import { APIURl } from '@/services/APIPath';
 
 const blurvalue = '10px';
 
-export default function ProductDedicatedPage({ id }: { id: string }) {
+export default function ProductDedicatedPage({ id }: any) {
   const [product, setProduct] = useState<any>(null);
   const [parsedFeatures, setParsedFeatures] = useState<any[]>([]);
   const [marketServiceLoaded, setMarketServiceLoaded] = useState(false);
