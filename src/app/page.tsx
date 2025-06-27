@@ -3,23 +3,37 @@ import HomeClient from './HomeClient';
 import { APIURl } from '@/services/APIPath';
 
 export async function generateMetadata() {
-  const res = await fetch(`${APIURl}/products/products/isprincipal`);
-  const productos = await res.json();
+  try {
+    const res = await fetch(`${APIURl}/products/products/isprincipal`, {
+      // Previene caché, opcional
+      cache: 'no-store',
+      // Establece un timeout máximo en algunos entornos
+      next: { revalidate: 0 }
+    });
 
-  return {
-    title: 'Home',
-    description: `"Lo natural en cada producto" – Explora nuestros productos principales en Aurilia.`,
-    openGraph: {
+    const productos = await res.json();
+
+    return {
       title: 'Home',
-      description: 'Lo natural en cada producto',
-      images: productos?.[0]?.imageUrl ? [productos[0].imageUrl] : [],
-    },
-  };
+      description: `"Lo natural en cada producto" – Explora nuestros productos principales en Aurilia.`,
+      openGraph: {
+        title: 'Home',
+        description: 'Lo natural en cada producto',
+        images: productos?.[0]?.imageUrl ? [productos[0].imageUrl] : [],
+      },
+    };
+  } catch (error) {
+    console.error('Error al generar metadata:', error);
+
+    return {
+      title: 'Aurilia',
+      description: `"Lo natural en cada producto"`,
+    };
+  }
 }
 
-export default async function Page() {
-  const res = await fetch(`${APIURl}/products/products/isprincipal`, { cache: 'no-store' });
-  const productos = await res.json();
 
-  return <HomeClient productos={productos} />;
+export default function Page() {
+  return <HomeClient/>;
 }
+

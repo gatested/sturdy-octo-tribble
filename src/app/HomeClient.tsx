@@ -6,6 +6,7 @@ import Product from '@/components/product';
 import ProductSkeleton from '@/components/productSkeleton';
 import { motion } from 'framer-motion';
 import '@/styles/globals.css';
+import { APIURl } from '@/services/APIPath';
 
 type Producto = {
   id: string;
@@ -40,17 +41,24 @@ const SloganP = () => (
   </motion.p>
 );
 
-interface HomeClientProps {
-  productos: Producto[];
-}
-
-export default function HomeClient({ productos }: HomeClientProps) {
-  const router = useRouter();
+export default function HomeClient() {
+  const [productos, setProductos] = useState<Producto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-    setIsLoading(false);
+
+    fetch(`${APIURl}/products/products/isprincipal`)
+      .then(res => res.json())
+      .then(data => {
+        setProductos(data);
+      })
+      .catch(err => {
+        console.error('Error cargando productos:', err);
+        setProductos([]);
+      })
+      .finally(() => setIsLoading(false));
   }, []);
 
   return (
@@ -94,7 +102,7 @@ export default function HomeClient({ productos }: HomeClientProps) {
       </div>
 
       <div style={{ display: "flex", justifyContent: "center" }}>
-        {!isLoading && (
+        {!isLoading && productos.length > 0 && (
           <motion.button
             initial="hidden"
             whileInView="visible"

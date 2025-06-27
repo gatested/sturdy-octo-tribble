@@ -1,44 +1,103 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import '@/styles/Profile.css';
+import { useEffect, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
-import Product from '@/components/product';
 import { motion, AnimatePresence } from 'framer-motion';
+import '@/styles/Profile.css';
+import Product from '@/components/product';
+import { APIURl } from '@/services/APIPath';
 
-export default function VendorClient({ user, products }: { user: any, products: any[] | null }) {
+interface VendorClientProps {
+  tagname: string;
+}
+
+interface User {
+  id: number;
+  display_name: string;
+  username: string;
+  img_cover: string;
+  img_photo: string;
+  description: string;
+}
+
+interface Product {
+  id: number;
+  name: string;
+  description: string;
+  isPrincipal?: boolean;
+  // otros campos si es necesario
+}
+
+export default function VendorClient({ tagname }: VendorClientProps) {
+  const [user, setUser] = useState<User | null>(null);
+  const [products, setProducts] = useState<Product[] | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
-    setLoading(false);
-  }, [user]);
+
+    const fetchAll = async () => {
+      try {
+        const userRes = await fetch(`${APIURl}/vendors/bytagname/${tagname}`);
+        const userData = await userRes.json();
+        const fetchedUser = userData?.[0] || null;
+        setUser(fetchedUser);
+
+        if (fetchedUser?.id) {
+          const productRes = await fetch(`${APIURl}/vendors/${fetchedUser.id}/products`);
+          const productData = await productRes.json();
+          setProducts(productData || []);
+        } else {
+          setProducts([]);
+        }
+      } catch (err) {
+        console.error('Error cargando datos desde cliente:', err);
+        setUser(null);
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAll();
+  }, [tagname]);
 
   return (
     <div className="ProfileContainer">
       <motion.div
         className="ProfileCover"
-        style={{ backgroundImage: user ? `url(${user.img_cover})` : 'none' }}
+        style={{
+          backgroundImage: user && !loading ? `url(${user.img_cover})` : 'none',
+        }}
         initial={{ opacity: 0 }}
-        animate={{ opacity: user ? 1 : 0 }}
+        animate={{ opacity: loading ? 0 : 1 }}
         transition={{ duration: 0.8 }}
       />
-
       <div className="ProfileOther">
         <div className="ProfileInfo">
           <AnimatePresence mode="wait">
-            {loading ? (
-              <motion.div key="skeleton-logo" className="ProfileLogo">
+            {loading || !user ? (
+              <motion.div
+                key="skeleton-logo"
+                initial={{ opacity: 1 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.4 }}
+                className="ProfileLogo"
+              >
                 <Skeleton className="ProfileLogo" />
               </motion.div>
             ) : (
               <motion.div
                 key="user-logo"
-                className="ProfileLogo PLColor"
-                style={{ backgroundImage: user ? `url(${user.img_photo})` : 'none' }}
                 initial={{ opacity: 0, y: 20, filter: 'blur(10px)' }}
                 animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                exit={{ opacity: 0 }}
                 transition={{ duration: 0.6 }}
+                className="ProfileLogo PLColor"
+                style={{
+                  backgroundImage: `url(${user?.img_photo})`,
+                }}
               />
             )}
           </AnimatePresence>
@@ -46,7 +105,14 @@ export default function VendorClient({ user, products }: { user: any, products: 
           <div className="ProfileColumn">
             <AnimatePresence mode="wait">
               {loading || !user ? (
-                <motion.div key="skeleton-info" className="SkeletonTitles">
+                <motion.div
+                  key="skeleton-info"
+                  initial={{ opacity: 1 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="SkeletonTitles"
+                >
                   <Skeleton width="50%" height={40} />
                   <Skeleton width={100} height={15} />
                   <Skeleton width="100%" height={20} />
@@ -56,6 +122,7 @@ export default function VendorClient({ user, products }: { user: any, products: 
                   key="user-info"
                   initial={{ opacity: 0, y: 10, filter: 'blur(10px)' }}
                   animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0 }}
                   transition={{ duration: 0.6 }}
                 >
                   <h1>{user.display_name}</h1>
@@ -68,7 +135,7 @@ export default function VendorClient({ user, products }: { user: any, products: 
         </div>
 
         <div className="ProfileProducts">
-          {user && products?.length ? (
+          {!loading && products?.length ? (
             <motion.div
               initial={{ height: 0, opacity: 0, y: 50, filter: 'blur(10px)' }}
               animate={{ height: 'auto', opacity: 1, y: 0, filter: 'blur(0px)' }}
@@ -76,8 +143,12 @@ export default function VendorClient({ user, products }: { user: any, products: 
             >
               <h2>Products</h2>
               <div className="ProductList">
-                {products.map((prod, i) => (
-                  <Product ProductElement={prod} styles={{ marginLeft: i > 0 ? '10px' : 0 }} key={prod.id || i} />
+                {products.map((producto, i) => (
+                  <Product
+                    ProductElement={producto}
+                    styles={{ marginLeft: i > 0 ? '10px' : 0 }}
+                    key={producto.id || i}
+                  />
                 ))}
               </div>
             </motion.div>
